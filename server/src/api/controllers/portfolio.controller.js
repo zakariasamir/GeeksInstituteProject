@@ -1,21 +1,39 @@
-const Portfolio = require("../models/portfolio.model");
-const User = require("../models/user.model");
+const Portfolio = require("../models/portfolio.model"); // Assuming the portfolio model file is located here
+const User = require("../models/user.model"); // To reference the employee in the schema
 
-// Create a new portfolio (Manager only)
+// Create Portfolio
 const createPortfolio = async (req, res) => {
+  const { name, position, bio, education, experience, projects, skills } =
+    req.body;
+  const picture = req.file ? req.file.path : null; // Get the file path if a picture is uploaded
+
   try {
-    const { education, experience, projects, skills, employeeId } = req.body;
-    const picture = req.file?.path || null;
-
-    // Check if portfolio already exists for the employee
-    const existing = await Portfolio.findOne({ employee: employeeId });
-    if (existing)
+    // Check if the user is a manager
+    if (req.user.role !== "manager") {
       return res
-        .status(400)
-        .json({ message: "Portfolio already exists for this employee." });
+        .status(403)
+        .json({ error: "Forbidden: Only managers can create portfolios" });
+    }
 
-    const portfolio = new Portfolio({
-      employee: employeeId,
+    // Check if all required fields are provided
+    if (!name || !position || !bio) {
+      return res.status(400).json({
+        error: "Portfolio creation failed: Missing required information!",
+      });
+    }
+
+    // Find the user (employee) by the provided employee ID in the request
+    const user = await User.findById(req.body.employeeId); // Employee's ID is passed in the request body
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Create the new portfolio
+    const newPortfolio = new Portfolio({
+      employee: user._id,
+      name,
+      position,
+      bio,
       picture,
       education,
       experience,
@@ -23,100 +41,123 @@ const createPortfolio = async (req, res) => {
       skills,
     });
 
-    await portfolio.save();
-    res.status(201).json(portfolio);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to create portfolio", error: err.message });
+    // Save the portfolio to the database
+    const portfolio = await newPortfolio.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Portfolio created successfully",
+      portfolio,
+    });
+  } catch (error) {
+    console.error("Error creating portfolio:", error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: `Error creating portfolio: ${error.message}`,
+    });
   }
 };
 
-// Get a portfolio by ID
+// Get Portfolio (by employee ID)
 const getPortfolioById = async (req, res) => {
   try {
-    const portfolio = await Portfolio.findById(req.params.id).populate(
-      "employee",
-      "email role"
-    );
+    const portfolio = await Portfolio.findOne({
+      employee: req.user.id,
+    }).populate("employee", "username email");
 
-    if (!portfolio)
-      return res.status(404).json({ message: "Portfolio not found" });
-
-    // Employees can only access their own
-    if (
-      req.user.role === "employee" &&
-      portfolio.employee._id.toString() !== req.user.id
-    ) {
-      return res.status(403).json({ message: "Access denied" });
+    if (!portfolio) {
+      return res.status(404).json({ error: "Portfolio not found" });
     }
 
-    res.status(200).json(portfolio);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to get portfolio", error: err.message });
+    res.status(200).json({ portfolio });
+  } catch (error) {
+    console.error("Error getting portfolio:", error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: `Error fetching portfolio: ${error.message}`,
+    });
   }
 };
 
-// Get all portfolios (Manager only)
+// Get All Portfolios (for admins or superusers)
 const getAllPortfolios = async (req, res) => {
   try {
     const portfolios = await Portfolio.find().populate(
       "employee",
-      "email role"
+      "username email"
     );
-    res.status(200).json(portfolios);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch portfolios", error: err.message });
+
+    if (!portfolios || portfolios.length === 0) {
+      return res.status(404).json({ error: "No portfolios found" });
+    }
+
+    res.status(200).json({ portfolios });
+  } catch (error) {
+    console.error("Error fetching all portfolios:", error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: `Error fetching portfolios: ${error.message}`,
+    });
   }
 };
 
-// Update portfolio (Manager only)
+// Update Portfolio
 const updatePortfolio = async (req, res) => {
+  const { name, position, bio, education, experience, projects, skills } = req.body;
+  const picture = req.file ? req.file.path : null;  // Get the file path if a picture is uploaded
+
   try {
-    const { education, experience, projects, skills } = req.body;
-    const picture = req.file?.path;
+    // Check if the user is a manager
+    if (req.user.role !== "manager") {
+      return res.status(403).json({ error: "Forbidden: Only managers can update portfolios" });
+    }
 
-    const updateFields = {
-      education,
-      experience,
-      projects,
-      skills,
-    };
-    if (picture) updateFields.picture = picture;
-
-    const portfolio = await Portfolio.findByIdAndUpdate(
-      req.params.id,
-      updateFields,
-      { new: true }
+    // Update the portfolio (only if the manager is updating a specific employee's portfolio)
+    const portfolio = await Portfolio.findOneAndUpdate(
+      { employee: req.body.employeeId },
+      { name, position, bio, picture, education, experience, projects, skills },
+      { new: true } // Return the updated portfolio
     );
 
-    if (!portfolio)
-      return res.status(404).json({ message: "Portfolio not found" });
+    if (!portfolio) {
+      return res.status(404).json({ error: "Portfolio not found" });
+    }
 
-    res.status(200).json(portfolio);
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to update portfolio", error: err.message });
+    res.status(200).json({
+      success: true,
+      message: "Portfolio updated successfully",
+      portfolio,
+    });
+  } catch (error) {
+    console.error("Error updating portfolio:", error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: `Error updating portfolio: ${error.message}`,
+    });
   }
 };
 
-// Delete portfolio (Manager only)
+// Delete Portfolio
 const deletePortfolio = async (req, res) => {
   try {
-    const deleted = await Portfolio.findByIdAndDelete(req.params.id);
-    if (!deleted)
-      return res.status(404).json({ message: "Portfolio not found" });
+    const portfolio = await Portfolio.findOneAndDelete({
+      employee: req.user.id,
+    });
 
-    res.status(200).json({ message: "Portfolio deleted successfully" });
-  } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to delete portfolio", error: err.message });
+    if (!portfolio) {
+      return res.status(404).json({ error: "Portfolio not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Portfolio deleted successfully",
+    });
+  } catch (error) {
+    console.error("Error deleting portfolio:", error);
+    res.status(500).json({
+      error: "Internal server error",
+      message: `Error deleting portfolio: ${error.message}`,
+    });
   }
 };
 

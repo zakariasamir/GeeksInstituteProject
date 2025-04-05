@@ -45,8 +45,10 @@ const register = async (req, res) => {
 };
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
+  const jwtSecret = process.env.JWT_SECRET;
+  console.log("JWT Secret:", jwtSecret);
   try {
+    const { email, password } = req.body;
     if (!email || !password) {
       return res.status(400).json({
         error: "Login failed: Missing required information!",
@@ -62,19 +64,10 @@ const login = async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).json({ error: "Invalid credentials" });
     }
-
-    const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    // res.status(200).json({
-    //   success: true,
-    //   message: "Login successful",
-    //   token: token,
-    //   user: { id: user._id, email: user.email, fullname: user.fullname },
-    // });
+    const token = jwt.sign({ id: user._id, role: user.role }, jwtSecret, {
+      expiresIn: "1800s",
+    });
+    console.log("controller token", token);
     res
       .cookie("token", token, { httpOnly: true })
       .json({ message: "Login Successful", token: token });
