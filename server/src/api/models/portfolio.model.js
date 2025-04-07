@@ -5,7 +5,7 @@ const portfolioSchema = new mongoose.Schema({
   position: { type: String, required: true },
   bio: { type: String, required: true },
   picture: String,
-  education: [{ school: String, degree: String, year: Number }],
+  education: [{ school: String, degree: String, year: String }],
   experience: [{ company: String, role: String, duration: String }],
   projects: [{ name: String, description: String }],
   skills: [{ type: String }],

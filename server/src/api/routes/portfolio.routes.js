@@ -6,6 +6,7 @@ const {
   deletePortfolio,
   getAllPortfolios,
   getPortfolioById,
+  getPortfolioByEmployeeId,
 } = require("../controllers/portfolio.controller");
 const verifyToken = require("../middlewares/auth.middleware");
 const allowRoles = require("../middlewares/role.middleware");
@@ -30,6 +31,7 @@ router.delete("/:id", verifyToken, allowRoles("manager"), deletePortfolio);
 router.get("/", verifyToken, allowRoles("manager"), getAllPortfolios);
 
 // Manager & Employee
+router.get("/:employeeId", verifyToken, getPortfolioByEmployeeId);
 router.get("/:id", verifyToken, getPortfolioById);
 
 module.exports = router;
