@@ -5,10 +5,12 @@ const connectDB = require("./config/db.config");
 const authRoutes = require("./api/routes/auth.routes");
 const portfolioRouter = require("./api/routes/portfolio.routes");
 const employeeRoutes = require("./api/routes/employee.routes");
+const cookieParser = require("cookie-parser");
 const corsOptions = {
   origin: process.env.CLIENT_URL,
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true,
+  alloowedHeaders: ["Content-Type", "Authorization"],
 };
 
 const app = express();
@@ -17,6 +19,7 @@ const PORT = process.env.SERVER_PORT || 5000;
 async function main() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use(cookieParser());
   app.use(cors(corsOptions));
   dotenv.config();
   connectDB();

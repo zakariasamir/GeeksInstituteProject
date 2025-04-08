@@ -1,16 +1,18 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
+import Cookies from "js-cookie";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
 });
 
 // Add request interceptor to include token
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
     if (token) {
+      console.log("employee Slice", token)
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
@@ -35,7 +37,7 @@ export const fetchEmployees = createAsyncThunk(
             await API.get(`/portfolio/${employee._id}`);
             return { ...employee, hasPortfolio: true };
           } catch (error) {
-            return { ...employee, hasPortfolio: false };
+            return { ...employee, hasPortfolio: false, error: error.message };
           }
         })
       );

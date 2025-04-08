@@ -1,7 +1,19 @@
+import Cookies from "js-cookie";
+
 export const handleLogout = () => {
-  localStorage.removeItem("token");
+  Cookies.remove("token");
   // Use window.location.href for a full page refresh
   window.location.href = "/login";
+};
+
+// export const setToken = (token) => {
+//   // Set token with expiry time (e.g., 30 minutes)
+//   Cookies.set("token", token, { expires: 1 / 48 });
+// };
+
+export const getToken = () => {
+  console.log("Token from Cookies:", Cookies.get("token"));
+  return Cookies.get("token");
 };
 
 export const isTokenExpired = (token) => {

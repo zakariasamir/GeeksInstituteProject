@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { loginUser, clearError } from "../redux/slices/authSlice";
 import { Link, useNavigate } from "react-router-dom";
 import { FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
+import Cookies from "js-cookie";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -26,11 +27,14 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await dispatch(loginUser(form)).unwrap();
-      localStorage.setItem('token', response.token);
-      navigate('/dashboard');
+      const result = await dispatch(loginUser(form)).unwrap();
+      if (result.user.role === "manager") {
+        navigate("/dashboard");
+      } else if (result.user.role === "employee") {
+        navigate("/my-portfolio");
+      }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
     }
   };
 

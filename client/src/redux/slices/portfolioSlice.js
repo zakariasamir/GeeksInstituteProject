@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 import { handleLogout, isTokenExpired } from "../../utils/auth";
+import Cookies from "js-cookie"
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   withCredentials: true,
 });
 
@@ -12,7 +13,7 @@ const API = axios.create({
 // Add request interceptor to check token before each request
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    const token = Cookies.get("token");
 
     if (token) {
       if (isTokenExpired(token)) {
@@ -70,7 +71,7 @@ export const fetchPortfolioById = createAsyncThunk(
 
 export const createPortfolio = createAsyncThunk(
   "portfolio/create",
-  async ({ employeeId, portfolioData }, { rejectWithValue }) => {
+  async ({ portfolioData }, { rejectWithValue }) => {
     try {
       const formData = new FormData();
 

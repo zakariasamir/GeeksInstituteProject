@@ -46,7 +46,6 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   const jwtSecret = process.env.JWT_SECRET;
-  console.log("JWT Secret:", jwtSecret);
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -67,10 +66,24 @@ const login = async (req, res) => {
     const token = jwt.sign({ id: user._id, role: user.role }, jwtSecret, {
       expiresIn: "1800s",
     });
-    console.log("controller token", token);
+
+    // Send token in httpOnly cookie and user info in response
     res
-      .cookie("token", token, { httpOnly: true })
-      .json({ message: "Login Successful", token: token });
+      .cookie("token", token, {
+        httpOnly: true,
+        // secure: process.env.NODE_ENV === "production", // Use secure in production
+        // sameSite: "strict",
+        maxAge: 1800000, // 30 minutes in milliseconds
+      })
+      .json({
+        message: "Login Successful",
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role,
+        },
+      });
   } catch (error) {
     return res
       .status(500)
@@ -94,8 +107,30 @@ const logout = async (req, res) => {
   }
 };
 
+const checkAuthStatus = async (req, res) => {
+  try {
+    // Get user from database using the ID from verified token
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(401).json({ error: "User not found" });
+    }
+
+    res.json({
+      user: {
+        _id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(401).json({ error: "Not authenticated" });
+  }
+};
+
 module.exports = {
   register,
   login,
   logout,
+  checkAuthStatus,
 };

@@ -14,7 +14,7 @@ export default function Home() {
             <p className="mt-6 max-w-2xl mx-auto text-xl text-indigo-100">
               A comprehensive platform for managing employee portfolios and professional development.
             </p>
-            <div className="mt-10 flex justify-center gap-4">
+            {/* <div className="mt-10 flex justify-center gap-4">
               <Link
                 to="/register"
                 className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-indigo-50"
@@ -27,7 +27,7 @@ export default function Home() {
               >
                 Sign In
               </Link>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

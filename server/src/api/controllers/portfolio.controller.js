@@ -167,9 +167,9 @@ const updatePortfolio = async (req, res) => {
 // Delete Portfolio
 const deletePortfolio = async (req, res) => {
   try {
-    const portfolio = await Portfolio.findOneAndDelete({
-      employee: req.user.id,
-    });
+    const portfolioId = req.params.id;
+    console.log("Deleting portfolio with ID:", portfolioId);
+    const portfolio = await Portfolio.findByIdAndDelete(portfolioId);
 
     if (!portfolio) {
       return res.status(404).json({ error: "Portfolio not found" });

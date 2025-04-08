@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { fetchEmployees } from "../redux/slices/employeeSlice";
-import { handleLogout, isTokenExpired } from "../utils/auth";
+import { handleLogout } from "../utils/auth";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
@@ -10,18 +10,18 @@ export default function Dashboard() {
   const { employees, loading, error } = useSelector((state) => state.employee);
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   useEffect(() => {
-    const token = localStorage.getItem("token");
+    // const token = localStorage.getItem("token");
 
     // Check if token exists and is valid
-    if (!token || isTokenExpired(token)) {
-      handleLogout();
-      return;
-    }
+    // if (!token || isTokenExpired(token)) {
+    //   handleLogout();
+    //   return;
+    // }
 
-    if (!isAuthenticated) {
-      navigate("/login");
-      return;
-    }
+    // if (!isAuthenticated) {
+    //   navigate("/login");
+    //   return;
+    // }
 
     dispatch(fetchEmployees())
       .unwrap()
@@ -71,7 +71,7 @@ export default function Dashboard() {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">Employee Dashboard</h1>
+      {/* <h1 className="text-2xl font-semibold mb-4">Employee Dashboard</h1> */}
       <div className="max-w-4xl mx-auto">
         <div className="space-y-4">
           {employees.map((emp) => (
